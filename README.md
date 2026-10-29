@@ -7,6 +7,7 @@ Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 | `net-analyzer/beszel-agent`             | [Beszel](https://beszel.dev) monitoring agent |
 | `net-analyzer/beszel-hub`               | Beszel hub (web UI and API)                   |
 | `acct-user/beszel`, `acct-group/beszel` | Service user and group for the hub            |
+| `dev-lang/bun-bin`                      | Prebuilt [Bun](https://bun.sh) runtime        |
 
 ## Usage
 
@@ -41,13 +42,24 @@ Upstream ships no source-form assets that Portage can use offline, so each relea
 
 Only the Go compile is done by Portage; nothing else is prebuilt. The `Manifest` pins the hashes of both tarballs.
 
+## `dev-lang/bun-bin`
+
+Bun is Zig plus JavaScriptCore, so it is not built from source. The ebuild started as the GURU one and installs
+upstream's release zip. [`scripts/bun-bump.sh`](scripts/bun-bump.sh) checks each zip against the release's
+`SHASUMS256.txt` before writing the Manifest. That file comes from the same release as the zips, so it catches corrupt or
+wrong downloads, not a compromised release.
+
 ## Version bumps
 
-`.github/workflows/beszel-bump.yml` runs daily (and on demand). When upstream has a newer release it builds and uploads
-the distfiles, renames the ebuilds, regenerates both Manifests and opens a draft PR. Locally:
+`.github/workflows/bump.yml` runs daily and on demand (`workflow_dispatch` takes a package and optionally a version). It
+runs one `scripts/<package>-bump.sh` per package. When upstream has a newer release, the script regenerates the ebuilds
+and Manifests and the workflow opens a draft PR. For Beszel it also builds the distfiles and uploads them to the
+overlay release first. Locally:
 
 ```bash
 scripts/beszel-bump.sh [--no-upload] [version]
+scripts/bun-bump.sh [version]
 ```
 
-An existing `beszel-<version>` release is reused rather than rebuilt, so published hashes never change.
+An existing `beszel-<version>` release is reused rather than rebuilt, so published hashes never change. Shared helpers
+live in [`scripts/lib/overlay.sh`](scripts/lib/overlay.sh).

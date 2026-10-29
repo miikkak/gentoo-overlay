@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>miikka@guesswhoami.net</email>
+		<name>Miikka Karhuluoma</name>
+	</maintainer>
+	<longdescription>
+		Beszel agent for the Beszel server monitoring hub.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">henrygd/beszel</remote-id>
+	</upstream>
+</pkgmetadata>

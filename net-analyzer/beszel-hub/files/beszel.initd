@@ -1,0 +1,80 @@
+#!/sbin/openrc-run
+# shellcheck shell=bash
+
+name="Beszel Hub"
+description="Beszel monitoring hub"
+
+# Default configuration (override in /etc/conf.d/beszel)
+BESZEL_BINARY="${BESZEL_BINARY:-/usr/bin/beszel}"
+BESZEL_LISTEN="${BESZEL_LISTEN:-127.0.0.1:8090}"
+BESZEL_DATA_DIR="${BESZEL_DATA_DIR:-/var/lib/beszel}"
+BESZEL_LOG_DIR="${BESZEL_LOG_DIR:-/var/log/beszel}"
+BESZEL_USER="${BESZEL_USER:-beszel}"
+BESZEL_GROUP="${BESZEL_GROUP:-beszel}"
+# Required: set to the public URL beszel is reachable at, e.g. https://beszel.example.com
+BESZEL_APP_URL="${BESZEL_APP_URL:-}"
+# Optional: heartbeat URL to confirm the hub is alive (e.g. healthchecks.io or similar)
+BESZEL_HEARTBEAT_URL="${BESZEL_HEARTBEAT_URL:-}"
+BESZEL_HEARTBEAT_INTERVAL="${BESZEL_HEARTBEAT_INTERVAL:-60}"
+BESZEL_HEARTBEAT_METHOD="${BESZEL_HEARTBEAT_METHOD:-POST}"
+
+supervisor="supervise-daemon"
+command="${BESZEL_BINARY}"
+command_args="serve --http ${BESZEL_LISTEN}"
+command_user="${BESZEL_USER}:${BESZEL_GROUP}"
+pidfile="/run/beszel.pid"
+directory="${BESZEL_DATA_DIR}"
+output_log="${BESZEL_LOG_DIR}/beszel.log"
+error_log="${BESZEL_LOG_DIR}/beszel.log"
+
+export APP_URL="${BESZEL_APP_URL}"
+[[ -n "${BESZEL_HEARTBEAT_URL}" ]] && export HEARTBEAT_URL="${BESZEL_HEARTBEAT_URL}"
+[[ -n "${BESZEL_HEARTBEAT_URL}" ]] && export HEARTBEAT_INTERVAL="${BESZEL_HEARTBEAT_INTERVAL}"
+[[ -n "${BESZEL_HEARTBEAT_URL}" ]] && export HEARTBEAT_METHOD="${BESZEL_HEARTBEAT_METHOD}"
+
+depend() {
+  need net
+  use logger
+  after nftables
+}
+
+start_pre() {
+  if [[ ! -x "${BESZEL_BINARY}" ]]; then
+    eerror "Beszel binary not found or not executable: ${BESZEL_BINARY}"
+    return 1
+  fi
+
+  if [[ -z "${BESZEL_APP_URL}" ]]; then
+    eerror "BESZEL_APP_URL is required but not set"
+    eerror "Set it in /etc/conf.d/beszel, e.g.: BESZEL_APP_URL=\"https://beszel.example.com\""
+    return 1
+  fi
+
+  if ! getent passwd "${BESZEL_USER}" >/dev/null 2>&1; then
+    eerror "User '${BESZEL_USER}' does not exist"
+    eerror "Create it with: useradd -r -s /sbin/nologin -d ${BESZEL_DATA_DIR} ${BESZEL_USER}"
+    return 1
+  fi
+
+  if ! getent group "${BESZEL_GROUP}" >/dev/null 2>&1; then
+    eerror "Group '${BESZEL_GROUP}' does not exist"
+    eerror "Create it with: groupadd -r ${BESZEL_GROUP}"
+    return 1
+  fi
+
+  if [[ ! -d "${BESZEL_DATA_DIR}" ]]; then
+    ebegin "Creating data directory ${BESZEL_DATA_DIR}"
+    mkdir -p "${BESZEL_DATA_DIR}"
+    eend $? || return 1
+  fi
+  chown "${BESZEL_USER}:${BESZEL_GROUP}" "${BESZEL_DATA_DIR}" || { eerror "Failed to set ownership on ${BESZEL_DATA_DIR}"; return 1; }
+  chmod 0750 "${BESZEL_DATA_DIR}" || { eerror "Failed to set permissions on ${BESZEL_DATA_DIR}"; return 1; }
+
+  if [[ ! -d "${BESZEL_LOG_DIR}" ]]; then
+    ebegin "Creating log directory ${BESZEL_LOG_DIR}"
+    mkdir -p "${BESZEL_LOG_DIR}"
+    eend $? || return 1
+  fi
+  chown "${BESZEL_USER}:${BESZEL_GROUP}" "${BESZEL_LOG_DIR}" || { eerror "Failed to set ownership on ${BESZEL_LOG_DIR}"; return 1; }
+  chmod 0750 "${BESZEL_LOG_DIR}" || { eerror "Failed to set permissions on ${BESZEL_LOG_DIR}"; return 1; }
+}

@@ -1,0 +1,74 @@
+---
+name: Beszel Version Bump
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    # Every day at 06:15 UTC
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Upstream version to bump to (default is the latest release)
+        type: string
+        default: ""
+
+concurrency:
+  group: beszel-bump
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: Bump beszel-agent and beszel-hub
+    runs-on: ["self-hosted", "linux", "x64"]
+    timeout-minutes: 30
+    env:
+      INPUT_VERSION: ${{ inputs.version }}
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+      GIT_COMMITTER_NAME: github-actions[bot]
+      GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          token: ${{ secrets.PULL_REQUEST_TOKEN || github.token }}
+
+      - name: Bump ebuilds
+        id: bump
+        env:
+          # Release upload only needs contents: write
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          out="$(scripts/beszel-bump.sh ${INPUT_VERSION:+"${INPUT_VERSION}"} | tee /dev/stderr | grep '^bumped=')"
+          echo "${out}" >> "${GITHUB_OUTPUT}"
+
+      - name: Open draft PR
+        if: steps.bump.outputs.bumped != ''
+        env:
+          # A PAT is needed so the PR triggers the required checks
+          GH_TOKEN: ${{ secrets.PULL_REQUEST_TOKEN || github.token }}
+          VERSION: ${{ steps.bump.outputs.bumped }}
+        run: |
+          set -Eeuo pipefail
+          branch="auto-update/beszel-${VERSION}"
+          if [[ -n "$(gh pr list --head "${branch}" --state open --json number --jq '.[].number')" ]]; then
+            echo "PR for ${branch} already open"
+            exit 0
+          fi
+          git switch -c "${branch}"
+          git add -A net-analyzer
+          git commit -m "chore(beszel): bump to ${VERSION}" \
+            -m "Bumps net-analyzer/beszel-agent and net-analyzer/beszel-hub. Distfiles are attached to the beszel-${VERSION} release of this repository."
+          git push origin "${branch}"
+          gh pr create --draft --base main --head "${branch}" \
+            --title "chore(beszel): bump to ${VERSION}" \
+            --label "release:none" \
+            --body "Automated bump to upstream [v${VERSION}](https://github.com/henrygd/beszel/releases/tag/v${VERSION}).
+
+          - [ ] \`ebuild ... digest\` / \`emerge -1 beszel-agent beszel-hub\` verified on a binary host
+          - [ ] release notes reviewed for config or flag changes"

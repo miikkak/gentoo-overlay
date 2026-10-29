@@ -1,0 +1,16 @@
+---
+name: Cache Cleanup
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup-caches:
+    uses: miikkak/workflows/.github/workflows/cache-cleanup.yml@a2afdedf16798a9393f7a8e383e936ca1bafc2f0 # main
+    secrets: inherit

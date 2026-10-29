@@ -1,0 +1,219 @@
+#!/sbin/openrc-run
+# shellcheck shell=bash
+
+name="Beszel Agent"
+description="Beszel monitoring agent"
+
+# Default configuration (override in /etc/conf.d/beszel-agent)
+BESZEL_BINARY="${BESZEL_BINARY:-/usr/bin/beszel-agent}"
+BESZEL_DATA_DIR="${BESZEL_DATA_DIR:-/var/lib/beszel-agent}"
+BESZEL_LOG_DIR="${BESZEL_LOG_DIR:-/var/log/beszel}"
+# Directory holding key and token files (mode 0700, owned by BESZEL_USER)
+BESZEL_CONF_DIR="${BESZEL_CONF_DIR:-/etc/beszel-agent}"
+# User/group to run as.
+# For a local agent on the same host as the hub: set both to the hub's user
+# (typically 'beszel') — the agent creates its socket with owner-write only,
+# so the connecting process must be the same user or root.
+# For a remote agent: root gives full metric access (SMART, etc.); a
+# dedicated non-root user works for CPU/memory/network/disk (add to 'disk'
+# group for SMART, 'docker'/'podman' for container stats).
+BESZEL_USER="${BESZEL_USER:-root}"
+BESZEL_GROUP="${BESZEL_GROUP:-root}"
+
+# Listen address: port number, host:port, or full path to Unix socket.
+# For a local agent on the same host as the hub, use a Unix socket in a
+# dedicated subdirectory (avoids chown/chmod of system directories like /run):
+#   BESZEL_LISTEN=/run/beszel-agent/beszel-agent.sock
+#   BESZEL_NETWORK=unix
+#   BESZEL_USER=beszel   <- must match the hub's user; agent chmod's socket to 0755 (owner-only write)
+# For a local agent accessible only on localhost (simpler, no permission issues):
+#   BESZEL_LISTEN=127.0.0.1:45876
+# For a remote agent accessed over the network (default):
+#   BESZEL_LISTEN=45876
+BESZEL_LISTEN="${BESZEL_LISTEN:-45876}"
+# Network type: tcp, tcp4, tcp6, or unix. Leave empty for default (tcp).
+BESZEL_NETWORK="${BESZEL_NETWORK:-}"
+# Suppress D-Bus/systemd service listing errors on OpenRC systems (default true).
+# Set false in /etc/conf.d/beszel-agent only if systemd unit monitoring is needed.
+BESZEL_SKIP_SYSTEMD="${BESZEL_SKIP_SYSTEMD:-true}"
+# WebSocket client mode: agent connects outward to the hub instead of the hub
+# connecting inward to the agent. Use this for remote servers where no inbound
+# port should be opened. Set HUB_URL and optionally disable the SSH server:
+#   BESZEL_HUB_URL=https://beszel.example.com
+#   BESZEL_DISABLE_SSH=true
+BESZEL_HUB_URL="${BESZEL_HUB_URL:-}"
+BESZEL_DISABLE_SSH="${BESZEL_DISABLE_SSH:-}"
+# Temperature sensor filter: comma-separated glob patterns, treated as a
+# whitelist by default or a blacklist when prefixed with '-'. Sensor names
+# use chip_label format (e.g. nct6798_auxtin4). Leave unset to monitor all.
+#   BESZEL_SENSORS="-nct6798_auxtin2,nct6798_auxtin4"
+BESZEL_SENSORS="${BESZEL_SENSORS:-}"
+# Container monitoring via Docker-compatible socket.
+# Auto-detected from /run/podman/podman.sock if present; override with:
+#   BESZEL_DOCKER_HOST=unix:///run/podman/podman.sock
+# Bare absolute paths are accepted and normalized to unix:// automatically.
+# Set BESZEL_DOCKER_HOST=none to disable auto-detection.
+BESZEL_DOCKER_HOST="${BESZEL_DOCKER_HOST:-}"
+if [[ -z "${BESZEL_DOCKER_HOST}" && -S "/run/podman/podman.sock" ]]; then
+  BESZEL_DOCKER_HOST="/run/podman/podman.sock"
+fi
+
+supervisor="supervise-daemon"
+command="${BESZEL_BINARY}"
+command_user="${BESZEL_USER}:${BESZEL_GROUP}"
+pidfile="/run/beszel-agent.pid"
+output_log="${BESZEL_LOG_DIR}/beszel-agent.log"
+error_log="${BESZEL_LOG_DIR}/beszel-agent.log"
+
+export LISTEN="${BESZEL_LISTEN}"
+export KEY_FILE="${BESZEL_CONF_DIR}/key"
+export TOKEN_FILE="${BESZEL_CONF_DIR}/token"
+export DATA_DIR="${BESZEL_DATA_DIR}"
+export SKIP_SYSTEMD="${BESZEL_SKIP_SYSTEMD}"
+[[ -n "${BESZEL_HUB_URL}" ]]     && export HUB_URL="${BESZEL_HUB_URL}"
+[[ -n "${BESZEL_DISABLE_SSH}" ]] && export DISABLE_SSH="${BESZEL_DISABLE_SSH}"
+[[ -n "${BESZEL_NETWORK}" ]]     && export NETWORK="${BESZEL_NETWORK}"
+[[ -n "${BESZEL_SENSORS}" ]]     && export SENSORS="${BESZEL_SENSORS}"
+if [[ -n "${BESZEL_DOCKER_HOST}" && "${BESZEL_DOCKER_HOST}" != "none" ]]; then
+  # Normalize bare absolute paths to unix:// scheme expected by Docker clients
+  if [[ "${BESZEL_DOCKER_HOST}" == /* ]]; then
+    export DOCKER_HOST="unix://${BESZEL_DOCKER_HOST}"
+  else
+    export DOCKER_HOST="${BESZEL_DOCKER_HOST}"
+  fi
+fi
+
+depend() {
+  need net
+  use logger
+  after nftables
+  # On the hub host, start after the hub so the socket directory exists
+  use beszel
+  # Soft dependency: start after podman if present so the socket is ready.
+  # Using 'use' (not a conditional 'after') ensures ordering is resolved at
+  # boot before the socket exists, not at script-evaluation time.
+  use podman
+}
+
+start_pre() {
+  if [[ "${BESZEL_DISABLE_SSH}" == "true" && -z "${BESZEL_HUB_URL}" ]]; then
+    eerror "BESZEL_DISABLE_SSH=true requires BESZEL_HUB_URL to be set"
+    eerror "Set BESZEL_HUB_URL=https://beszel.example.com in /etc/conf.d/beszel-agent"
+    return 1
+  fi
+
+  if [[ ! -x "${BESZEL_BINARY}" ]]; then
+    eerror "Beszel agent binary not found or not executable: ${BESZEL_BINARY}"
+    return 1
+  fi
+
+  if ! getent passwd "${BESZEL_USER}" >/dev/null 2>&1; then
+    eerror "User '${BESZEL_USER}' does not exist"
+    eerror "Create it with: useradd -r -s /sbin/nologin ${BESZEL_USER}"
+    return 1
+  fi
+
+  if ! getent group "${BESZEL_GROUP}" >/dev/null 2>&1; then
+    eerror "Group '${BESZEL_GROUP}' does not exist"
+    eerror "Create it with: groupadd -r ${BESZEL_GROUP}"
+    return 1
+  fi
+
+  if [[ ! -d "${BESZEL_CONF_DIR}" ]]; then
+    eerror "Config directory '${BESZEL_CONF_DIR}' does not exist"
+    eerror "Create it and populate credential files:"
+    eerror "  mkdir -m 0700 ${BESZEL_CONF_DIR}"
+    eerror "  chown ${BESZEL_USER}:${BESZEL_GROUP} ${BESZEL_CONF_DIR}"
+    eerror "  echo '<public key from hub>' > ${BESZEL_CONF_DIR}/key && chmod 0600 ${BESZEL_CONF_DIR}/key"
+    eerror "  echo '<token from hub>'       > ${BESZEL_CONF_DIR}/token && chmod 0600 ${BESZEL_CONF_DIR}/token"
+    eerror "  chown ${BESZEL_USER}:${BESZEL_GROUP} ${BESZEL_CONF_DIR}/key ${BESZEL_CONF_DIR}/token"
+    return 1
+  fi
+
+  # Warn if the config directory is accessible by others
+  local dir_perms
+  dir_perms="$(stat -c '%a' "${BESZEL_CONF_DIR}")"
+  if [[ "${dir_perms}" != "700" ]]; then
+    ewarn "Insecure permissions on ${BESZEL_CONF_DIR} (${dir_perms}), expected 700"
+    ewarn "Fix with: chmod 700 ${BESZEL_CONF_DIR}"
+  fi
+
+  if [[ ! -f "${BESZEL_CONF_DIR}/key" ]]; then
+    eerror "Key file '${BESZEL_CONF_DIR}/key' does not exist"
+    eerror "Copy the hub's public key from its system settings page"
+    return 1
+  fi
+
+  if [[ ! -f "${BESZEL_CONF_DIR}/token" ]]; then
+    eerror "Token file '${BESZEL_CONF_DIR}/token' does not exist"
+    eerror "Copy the registration token from the hub's system settings page"
+    return 1
+  fi
+
+  # Warn if token is readable by others
+  local token_perms
+  token_perms="$(stat -c '%a' "${BESZEL_CONF_DIR}/token")"
+  if [[ "${token_perms}" != "600" ]]; then
+    ewarn "Insecure permissions on ${BESZEL_CONF_DIR}/token (${token_perms}), expected 600"
+    ewarn "Fix with: chmod 600 ${BESZEL_CONF_DIR}/token"
+  fi
+
+  # Warn when running as non-root if conf dir or files are not owned by the service user
+  if [[ "${BESZEL_USER}" != "root" ]]; then
+    local conf_owner
+    conf_owner="$(stat -c '%U' "${BESZEL_CONF_DIR}")"
+    if [[ "${conf_owner}" != "${BESZEL_USER}" ]]; then
+      ewarn "${BESZEL_CONF_DIR} is owned by '${conf_owner}', not '${BESZEL_USER}'"
+      ewarn "The agent will fail to read credentials at runtime"
+      ewarn "Fix with: chown -R ${BESZEL_USER}:${BESZEL_GROUP} ${BESZEL_CONF_DIR}"
+    fi
+  fi
+
+  # Data directory: agent stores its state here
+  if [[ ! -d "${BESZEL_DATA_DIR}" ]]; then
+    ebegin "Creating data directory ${BESZEL_DATA_DIR}"
+    install -d -m 0750 -o "${BESZEL_USER}" -g "${BESZEL_GROUP}" "${BESZEL_DATA_DIR}"
+    eend $? || return 1
+  else
+    chown "${BESZEL_USER}:${BESZEL_GROUP}" "${BESZEL_DATA_DIR}" || { eerror "Failed to set ownership on ${BESZEL_DATA_DIR}"; return 1; }
+    chmod 0750 "${BESZEL_DATA_DIR}" || { eerror "Failed to set permissions on ${BESZEL_DATA_DIR}"; return 1; }
+  fi
+
+  # Log directory: always enforce ownership and restrictive permissions
+  if [[ ! -d "${BESZEL_LOG_DIR}" ]]; then
+    ebegin "Creating log directory ${BESZEL_LOG_DIR}"
+    mkdir -p "${BESZEL_LOG_DIR}"
+    eend $? || return 1
+  fi
+  chown "${BESZEL_USER}:${BESZEL_GROUP}" "${BESZEL_LOG_DIR}" || { eerror "Failed to set ownership on ${BESZEL_LOG_DIR}"; return 1; }
+  chmod 0750 "${BESZEL_LOG_DIR}" || { eerror "Failed to set permissions on ${BESZEL_LOG_DIR}"; return 1; }
+
+  # Unix socket mode: validate path, create and own the socket directory
+  if [[ "${BESZEL_NETWORK}" == "unix" ]]; then
+    if [[ "${BESZEL_LISTEN}" != /* ]]; then
+      eerror "BESZEL_LISTEN must be an absolute path in unix socket mode (got: '${BESZEL_LISTEN}')"
+      return 1
+    fi
+    local socket_dir
+    socket_dir="$(dirname "${BESZEL_LISTEN}")"
+    if [[ ! -d "${socket_dir}" ]]; then
+      ebegin "Creating socket directory ${socket_dir}"
+      mkdir -p "${socket_dir}"
+      eend $? || return 1
+    fi
+    # Enforce ownership/permissions on dedicated socket directories.
+    # Skip well-known system runtime dirs that are managed by the OS.
+    case "${socket_dir}" in
+      /run|/var/run|/tmp|/)
+        : ;;
+      *)
+        chown "${BESZEL_USER}:${BESZEL_GROUP}" "${socket_dir}" || { eerror "Failed to set ownership on ${socket_dir}"; return 1; }
+        chmod 0750 "${socket_dir}" || { eerror "Failed to set permissions on ${socket_dir}"; return 1; }
+        ;;
+    esac
+    # Remove stale socket from an unclean previous shutdown
+    if [[ -S "${BESZEL_LISTEN}" ]]; then
+      rm -f "${BESZEL_LISTEN}"
+    fi
+  fi
+}

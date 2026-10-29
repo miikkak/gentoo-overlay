@@ -1,0 +1,31 @@
+# /etc/conf.d/beszel-agent
+#
+# All variables are optional unless noted; defaults live in the init script.
+
+# Directory with the hub public key ("key") and registration token ("token"),
+# mode 0700, files 0600.
+#BESZEL_CONF_DIR="/etc/beszel-agent"
+
+# WebSocket mode: the agent connects outward to the hub (no inbound port).
+# Required when BESZEL_DISABLE_SSH=true.
+#BESZEL_HUB_URL="https://beszel.example.com"
+#BESZEL_DISABLE_SSH="true"
+
+# Listen address for hub-initiated (SSH) connections: port, host:port or a
+# unix socket path (with BESZEL_NETWORK=unix).
+#BESZEL_LISTEN="45876"
+#BESZEL_NETWORK=""
+
+# User/group to run as. root gives full metrics (SMART etc.).
+#BESZEL_USER="root"
+#BESZEL_GROUP="root"
+
+# Temperature sensor filter; a '-' prefix makes it a blacklist.
+#BESZEL_SENSORS="-chip_label1,chip_label2"
+
+# Container stats via a Docker-compatible socket (podman socket is
+# auto-detected). Set to "none" to disable.
+#BESZEL_DOCKER_HOST="/run/podman/podman.sock"
+
+# Set to "false" only if systemd unit monitoring is needed (never on OpenRC).
+#BESZEL_SKIP_SYSTEMD="true"

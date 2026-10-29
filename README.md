@@ -29,7 +29,6 @@ net-analyzer/beszel-agent ~amd64
 net-analyzer/beszel-hub ~amd64
 acct-user/beszel ~amd64
 acct-group/beszel ~amd64
-dev-lang/bun-bin ~amd64
 ```
 
 Then `emerge --sync miikkak` and `emerge -av net-analyzer/beszel-agent`.

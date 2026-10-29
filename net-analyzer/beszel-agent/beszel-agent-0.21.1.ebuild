@@ -19,7 +19,7 @@ LICENSE="MIT"
 # vendored Go modules
 LICENSE+=" Apache-2.0 BSD BSD-2 ISC MPL-2.0"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 arm64"
 IUSE="+nvml +smart"
 # Upstream tests need network and a running environment
 RESTRICT="test"

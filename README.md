@@ -21,15 +21,9 @@ sync-uri = https://github.com/miikkak/gentoo-overlay.git
 auto-sync = yes
 ```
 
-The packages are keyworded `~amd64`/`~arm64`, so on a stable system accept them first
-(`/etc/portage/package.accept_keywords/miikkak`; use `~arm64` on arm64):
-
-```text
-net-analyzer/beszel-agent ~amd64
-net-analyzer/beszel-hub ~amd64
-acct-user/beszel ~amd64
-acct-group/beszel ~amd64
-```
+The packages are keyworded `amd64`/`arm64` (not `~arch`): this is a personal overlay, upstream releases are followed
+through reviewed bump PRs, and only packages that are meant to be installed live here. No `package.accept_keywords`
+entries are needed.
 
 Then `emerge --sync miikkak` and `emerge -av net-analyzer/beszel-agent`.
 

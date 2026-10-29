@@ -13,9 +13,15 @@ SRC_URI="
 
 S="${WORKDIR}"
 
-LICENSE="MIT"
+# Bun is MIT but the binary statically links JavaScriptCore/WebKit (LGPL-2),
+# tinycc (LGPL-2.1) and many others; see upstream LICENSE.md. Dual-licensed
+# parts (zstd BSD/GPL-2, picohttp Perl/MIT) are covered by their permissive option.
+LICENSE="MIT LGPL-2 LGPL-2.1 BSD BSD-2 Apache-2.0 ZLIB ISC openssl icu IJG"
 SLOT="0"
 KEYWORDS="amd64 arm64"
+# The x64 binary targets Nehalem (SSE4.2); upstream does not support older CPUs
+IUSE="cpu_flags_x86_sse4_2"
+REQUIRED_USE="amd64? ( cpu_flags_x86_sse4_2 )"
 RESTRICT="strip test"
 
 BDEPEND="app-arch/unzip"

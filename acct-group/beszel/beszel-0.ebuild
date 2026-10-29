@@ -8,3 +8,4 @@ inherit acct-group
 DESCRIPTION="Group for the Beszel monitoring hub"
 
 ACCT_GROUP_ID=-1
+KEYWORDS="~amd64 ~arm64"

@@ -47,6 +47,8 @@ src_install() {
 	dobin beszel
 	newinitd "${FILESDIR}/beszel.initd" beszel
 	newconfd "${FILESDIR}/beszel.confd" beszel
+	# may hold BESZEL_HEARTBEAT_URL, a bearer secret
+	fperms 0600 /etc/conf.d/beszel
 	dodoc readme.md
 }
 

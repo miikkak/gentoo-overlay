@@ -50,12 +50,12 @@ main() {
   local upload=true version=""
   while (($#)); do
     case "$1" in
-    --no-upload) upload=false ;;
-    -*)
-      echo "Unknown option: $1" >&2
-      exit 2
-      ;;
-    *) version="${1#v}" ;;
+      --no-upload) upload=false ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        exit 2
+        ;;
+      *) version="${1#v}" ;;
     esac
     shift
   done
@@ -92,6 +92,13 @@ main() {
     step "Reusing distfiles from existing release ${tag}"
     gh release download "${tag}" --repo "${OVERLAY_REPO}" --dir "${dist}" \
       --pattern "beszel-${version}-*.tar.xz"
+    local asset
+    for asset in "beszel-${version}-deps.tar.xz" "beszel-${version}-web.tar.xz"; do
+      [[ -s "${dist}/${asset}" ]] || {
+        echo "Release ${tag} is missing ${asset}" >&2
+        exit 1
+      }
+    done
   else
     "${root}/scripts/beszel-build-distfiles.sh" "${version}" "${dist}"
     if [[ "${upload}" == true ]]; then

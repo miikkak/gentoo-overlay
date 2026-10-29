@@ -2,11 +2,11 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package | Description |
-| --- | --- |
-| `net-analyzer/beszel-agent` | [Beszel](https://beszel.dev) monitoring agent |
-| `net-analyzer/beszel-hub` | Beszel hub (web UI and API) |
-| `acct-user/beszel`, `acct-group/beszel` | Service user and group for the hub |
+| Package                                 | Description                                   |
+| --------------------------------------- | --------------------------------------------- |
+| `net-analyzer/beszel-agent`             | [Beszel](https://beszel.dev) monitoring agent |
+| `net-analyzer/beszel-hub`               | Beszel hub (web UI and API)                   |
+| `acct-user/beszel`, `acct-group/beszel` | Service user and group for the hub            |
 
 ## Usage
 
@@ -20,7 +20,17 @@ sync-uri = https://github.com/miikkak/gentoo-overlay.git
 auto-sync = yes
 ```
 
-Then `emerge --sync miikkak` and `emerge -av net-analyzer/beszel-agent`. Packages are `~amd64`/`~arm64`.
+The packages are keyworded `~amd64`/`~arm64`, so on a stable system accept them first
+(`/etc/portage/package.accept_keywords/miikkak`; use `~arm64` on arm64):
+
+```text
+net-analyzer/beszel-agent ~amd64
+net-analyzer/beszel-hub ~amd64
+acct-user/beszel ~amd64
+acct-group/beszel ~amd64
+```
+
+Then `emerge --sync miikkak` and `emerge -av net-analyzer/beszel-agent`.
 
 The init scripts keep the service names `beszel` (hub) and `beszel-agent`. The Go binaries are compiled by Portage on
 your machine, so `GOAMD64`, `GOARM64` and similar variables from `make.conf` apply.

@@ -7,6 +7,7 @@ inherit acct-user
 
 DESCRIPTION="User for the Beszel monitoring hub"
 
+KEYWORDS="~amd64 ~arm64"
 ACCT_USER_ID=-1
 ACCT_USER_GROUPS=( beszel )
 ACCT_USER_HOME=/var/lib/beszel

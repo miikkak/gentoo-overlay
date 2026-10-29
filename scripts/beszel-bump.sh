@@ -19,8 +19,8 @@ readonly UPSTREAM_URL="https://github.com/${UPSTREAM_REPO}"
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly root
-
-step() { printf '\n==> %s\n' "$*" >&2; }
+# shellcheck source=scripts/lib/overlay.sh
+. "${root}/scripts/lib/overlay.sh"
 
 current_version() {
   local f
@@ -29,21 +29,6 @@ current_version() {
     printf '%s\n' "${f%.ebuild}"
     return
   done
-}
-
-# "DIST <name> <size> BLAKE2B <hash> SHA512 <hash>"
-manifest_line() {
-  local file="$1"
-  printf 'DIST %s %s BLAKE2B %s SHA512 %s\n' \
-    "${file##*/}" "$(stat -c %s "${file}")" \
-    "$(b2sum "${file}" | cut -d' ' -f1)" "$(sha512sum "${file}" | cut -d' ' -f1)"
-}
-
-write_manifest() {
-  local pkg="$1"
-  shift
-  local f
-  for f in "$@"; do manifest_line "${f}"; done | sort >"${root}/net-analyzer/${pkg}/Manifest"
 }
 
 main() {
@@ -65,21 +50,13 @@ main() {
     version="$(gh api "repos/${UPSTREAM_REPO}/releases/latest" --jq .tag_name)"
     version="${version#v}"
   fi
-  [[ "${version}" =~ ^[0-9]+(\.[0-9]+)*$ ]] || {
-    echo "Refusing odd version string: ${version}" >&2
-    exit 1
-  }
+  require_version "${version}"
 
   local current
   current="$(current_version)"
   echo "current=${current} upstream=${version}" >&2
-  if [[ "${current}" == "${version}" ]]; then
-    echo "Already up to date" >&2
-    echo "bumped="
-    return
-  fi
-  if [[ "$(printf '%s\n%s\n' "${current}" "${version}" | sort -V | tail -n1)" != "${version}" ]]; then
-    echo "Upstream ${version} is not newer than ${current}" >&2
+  if ! is_newer "${current}" "${version}"; then
+    echo "Nothing to do: ${version} is not newer than ${current}" >&2
     echo "bumped="
     return
   fi
@@ -120,8 +97,8 @@ main() {
     git -C "${root}" mv \
       "net-analyzer/${pkg}/${pkg}-${current}.ebuild" "net-analyzer/${pkg}/${pkg}-${version}.ebuild"
   done
-  write_manifest beszel-agent "${dist}/beszel-${version}.tar.gz" "${dist}/beszel-${version}-deps.tar.xz"
-  write_manifest beszel-hub "${dist}/beszel-${version}.tar.gz" "${dist}/beszel-${version}-deps.tar.xz" \
+  write_manifest net-analyzer/beszel-agent "${dist}/beszel-${version}.tar.gz" "${dist}/beszel-${version}-deps.tar.xz"
+  write_manifest net-analyzer/beszel-hub "${dist}/beszel-${version}.tar.gz" "${dist}/beszel-${version}-deps.tar.xz" \
     "${dist}/beszel-${version}-web.tar.xz"
 
   echo "bumped=${version}"

@@ -28,6 +28,11 @@ BDEPEND="app-arch/unzip"
 
 QA_PREBUILT="usr/bin/bun"
 
+pkg_pretend() {
+	# the non-musl release archives are glibc binaries
+	use elibc_glibc || die "dev-lang/bun-bin installs a glibc binary and needs a glibc profile"
+}
+
 src_install() {
 	local bun_dir
 	if use amd64; then

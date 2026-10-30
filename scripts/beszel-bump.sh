@@ -6,7 +6,8 @@
 #   - uploads them to the overlay release "beszel-<ver>" (unless --no-upload)
 #   - renames the ebuilds and regenerates both thin Manifests
 #
-# Usage: beszel-bump.sh [--no-upload] [version]
+# Usage: beszel-bump.sh [--no-upload --out DIR] [version]
+# --out DIR keeps a copy of the generated distfiles; --no-upload requires it.
 # Without a version, the latest upstream release is used. Prints "bumped=<ver>"
 # on stdout when something changed, "bumped=" otherwise.
 set -Eeuo pipefail
@@ -22,20 +23,19 @@ readonly root
 # shellcheck source=scripts/lib/overlay.sh
 . "${root}/scripts/lib/overlay.sh"
 
-current_version() {
-  local f
-  for f in "${root}"/net-analyzer/beszel-agent/beszel-agent-*.ebuild; do
-    f="${f##*/beszel-agent-}"
-    printf '%s\n' "${f%.ebuild}"
-    return
-  done
-}
-
 main() {
-  local upload=true version=""
+  local upload=true version="" out=""
   while (($#)); do
     case "$1" in
       --no-upload) upload=false ;;
+      --out)
+        [[ -n "${2:-}" && "${2:-}" != -* ]] || {
+          echo "--out needs a directory" >&2
+          exit 2
+        }
+        out="$2"
+        shift
+        ;;
       -*)
         echo "Unknown option: $1" >&2
         exit 2
@@ -44,6 +44,11 @@ main() {
     esac
     shift
   done
+  # Without an upload the distfiles would only exist in the temporary directory
+  if [[ "${upload}" == false && -z "${out}" ]]; then
+    echo "--no-upload needs --out DIR to keep the generated distfiles" >&2
+    exit 2
+  fi
 
   if [[ -z "${version}" ]]; then
     step "Querying latest upstream release"
@@ -52,8 +57,14 @@ main() {
   fi
   require_version "${version}"
 
-  local current
-  current="$(current_version)"
+  # Both packages are renamed together, so they must be at the same version
+  local current hub_version
+  current="$(ebuild_version net-analyzer/beszel-agent beszel-agent)"
+  hub_version="$(ebuild_version net-analyzer/beszel-hub beszel-hub)"
+  if [[ "${hub_version}" != "${current}" ]]; then
+    echo "beszel-agent (${current}) and beszel-hub (${hub_version}) are at different versions" >&2
+    exit 1
+  fi
   echo "current=${current} upstream=${version}" >&2
   if ! is_newer "${current}" "${version}"; then
     echo "Nothing to do: ${version} is not newer than ${current}" >&2
@@ -86,6 +97,9 @@ main() {
         "${dist}/beszel-${version}-deps.tar.xz" "${dist}/beszel-${version}-web.tar.xz"
     fi
   fi
+
+  [[ -z "${out}" ]] || save_artifacts "${out}" \
+    "${dist}/beszel-${version}-deps.tar.xz" "${dist}/beszel-${version}-web.tar.xz"
 
   step "Fetching upstream source archive"
   curl -fsSL --retry 3 -o "${dist}/beszel-${version}.tar.gz" \

@@ -2,12 +2,15 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package                                 | Description                                   |
-| --------------------------------------- | --------------------------------------------- |
-| `net-analyzer/beszel-agent`             | [Beszel](https://beszel.dev) monitoring agent |
-| `net-analyzer/beszel-hub`               | Beszel hub (web UI and API)                   |
-| `acct-user/beszel`, `acct-group/beszel` | Service user and group for the hub            |
-| `dev-lang/bun-bin`                      | Prebuilt [Bun](https://bun.sh) runtime        |
+| Package                                                 | Description                                    |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent  |
+| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                    |
+| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub             |
+| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime         |
+| `games-util/rcon-cli`                                   | Minecraft RCON command-line client             |
+| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks |
+| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller          |
 
 ## Usage
 
@@ -49,17 +52,31 @@ upstream's release zip. [`scripts/bun-bump.sh`](scripts/bun-bump.sh) checks each
 `SHASUMS256.txt` before writing the Manifest. That file comes from the same release as the zips, so it catches corrupt or
 wrong downloads, not a compromised release.
 
+## `rcon-cli` and `mc-conn-poller`
+
+Both are pure-Go programs from the owner's own repositories, so the only offline input is the `go mod vendor` tree,
+published as `<name>-<version>-deps.tar.xz` on the overlay release `<name>-<version>`. Portage compiles them with
+`-trimpath -buildmode=pie` and sets `main.version`, so `--version` matches the upstream release tag.
+
+`mc-conn-poller` installs its init script from the upstream repository. Its configuration (`/etc/conf.d/mc-conn-poller`
+and the YAML with the Healthchecks.io ping URL, which is a secret) is per-host and managed outside the package; only
+examples are installed under `/usr/share/doc`.
+
 ## Version bumps
 
 `.github/workflows/bump.yml` runs daily and on demand (`workflow_dispatch` takes a package and optionally a version). It
-runs one `scripts/<package>-bump.sh` per package. When upstream has a newer release, the script regenerates the ebuilds
-and Manifests and the workflow opens a draft PR. For Beszel it also builds the distfiles and uploads them to the
-overlay release first. Locally:
+runs one bump script per package: `scripts/beszel-bump.sh`, `scripts/bun-bump.sh`, or `scripts/go-bump.sh <package>` for
+the Go programs. When upstream has a newer release, the script regenerates the ebuild and Manifest and the workflow opens
+a draft PR. For Beszel and the Go programs it also builds the distfiles and uploads them to the overlay release first.
+Locally:
 
 ```bash
-scripts/beszel-bump.sh [--no-upload] [version]
+scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
+scripts/go-bump.sh [--no-upload --out DIR] rcon-cli|mc-conn-poller [version]
 ```
 
-An existing `beszel-<version>` release is reused rather than rebuilt, so published hashes never change. Shared helpers
-live in [`scripts/lib/overlay.sh`](scripts/lib/overlay.sh).
+`--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would
+otherwise be deleted with the temporary directory while the ebuild and Manifest already point at them. An existing
+`<name>-<version>` release is reused rather than rebuilt, so published hashes never change. Shared helpers live in
+[`scripts/lib/overlay.sh`](scripts/lib/overlay.sh).

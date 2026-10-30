@@ -10,14 +10,8 @@ trap 'echo "Error on line $LINENO" >&2' ERR
 readonly UPSTREAM="https://github.com/henrygd/beszel"
 work=""
 
-step() { printf '\n==> %s\n' "$*" >&2; }
-
-# Reproducible tarball: sorted entries, fixed owner and mtime, single-threaded xz.
-make_tarball() {
-  local out="$1" dir="$2" path="$3"
-  tar --sort=name --owner=0 --group=0 --numeric-owner --mtime='@0' \
-    -C "${dir}" -cf - "${path}" | xz -9e -T1 >"${out}"
-}
+# shellcheck source=scripts/lib/overlay.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/overlay.sh"
 
 main() {
   if (($# != 2)); then

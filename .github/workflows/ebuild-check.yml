@@ -1,0 +1,38 @@
+---
+name: Ebuild Check
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.ebuild"
+      - "profiles/**"
+      - "licenses/**"
+      - "scripts/check-ebuilds.sh"
+      - ".github/workflows/ebuild-check.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ebuild-check:
+    name: Source ebuilds with Portage
+    # Needs Portage and a synced ::gentoo tree, which the self-hosted Gentoo
+    # runners have. Sourcing an ebuild runs its global-scope code, so pull
+    # requests from forks are not run on them.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ["self-hosted", "linux", "x64"]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Check ebuilds
+        run: scripts/check-ebuilds.sh

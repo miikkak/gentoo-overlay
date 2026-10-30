@@ -39,15 +39,6 @@ pkg_repo() {
   esac
 }
 
-current_version() {
-  local name="$1" pkgdir="$2" f
-  for f in "${root}/${pkgdir}/${name}"-*.ebuild; do
-    f="${f##*/"${name}"-}"
-    printf '%s\n' "${f%.ebuild}"
-    return
-  done
-}
-
 # build_deps <name> <repo> <version> <out.tar.xz>
 build_deps() {
   local name="$1" repo="$2" version="$3" out="$4" work
@@ -113,7 +104,7 @@ main() {
   require_version "${version}"
 
   local current
-  current="$(current_version "${name}" "${pkgdir}")"
+  current="$(ebuild_version "${pkgdir}" "${name}")"
   echo "current=${current} upstream=${version}" >&2
   if ! is_newer "${current}" "${version}"; then
     echo "Nothing to do: ${version} is not newer than ${current}" >&2

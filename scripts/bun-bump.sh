@@ -22,15 +22,6 @@ readonly root
 # shellcheck source=scripts/lib/overlay.sh
 . "${root}/scripts/lib/overlay.sh"
 
-current_version() {
-  local f
-  for f in "${root}/${PKGDIR}"/bun-bin-*.ebuild; do
-    f="${f##*/bun-bin-}"
-    printf '%s\n' "${f%.ebuild}"
-    return
-  done
-}
-
 # expected_sha256 <SHASUMS256.txt> <asset-file-name>
 expected_sha256() {
   awk -v want="$2" '{ n = $2; sub(/^\*/, "", n); sub(/^.*\//, "", n); if (n == want) print $1 }' "$1"
@@ -49,7 +40,7 @@ main() {
   require_version "${version}"
 
   local current
-  current="$(current_version)"
+  current="$(ebuild_version "${PKGDIR}" bun-bin)"
   echo "current=${current} upstream=${version}" >&2
   if ! is_newer "${current}" "${version}"; then
     echo "Nothing to do: ${version} is not newer than ${current}" >&2

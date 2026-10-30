@@ -23,15 +23,6 @@ readonly root
 # shellcheck source=scripts/lib/overlay.sh
 . "${root}/scripts/lib/overlay.sh"
 
-current_version() {
-  local f
-  for f in "${root}"/net-analyzer/beszel-agent/beszel-agent-*.ebuild; do
-    f="${f##*/beszel-agent-}"
-    printf '%s\n' "${f%.ebuild}"
-    return
-  done
-}
-
 main() {
   local upload=true version="" out=""
   while (($#)); do
@@ -67,7 +58,7 @@ main() {
   require_version "${version}"
 
   local current
-  current="$(current_version)"
+  current="$(ebuild_version net-analyzer/beszel-agent beszel-agent)"
   echo "current=${current} upstream=${version}" >&2
   if ! is_newer "${current}" "${version}"; then
     echo "Nothing to do: ${version} is not newer than ${current}" >&2

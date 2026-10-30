@@ -20,6 +20,24 @@ is_newer() {
   [[ "$1" != "$2" && "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" == "$2" ]]
 }
 
+# ebuild_version <category/package> <name>
+# Prints the version of the package's only ebuild. A bump renames exactly one
+# ebuild, so it fails (before anything is built or published) unless there is
+# exactly one.
+ebuild_version() {
+  local pkgdir="$1" name="$2" f
+  local -a found=()
+  for f in "${OVERLAY_ROOT}/${pkgdir}/${name}"-*.ebuild; do
+    [[ -e "${f}" ]] && found+=("${f}")
+  done
+  if ((${#found[@]} != 1)); then
+    echo "Expected exactly one ${name} ebuild in ${pkgdir}, found ${#found[@]}" >&2
+    return 1
+  fi
+  f="${found[0]##*/"${name}"-}"
+  printf '%s\n' "${f%.ebuild}"
+}
+
 # save_artifacts <dir> <file>...
 # Copies generated distfiles out of the bump script's temporary directory, so a
 # --no-upload run does not leave a bumped ebuild whose distfiles are gone.

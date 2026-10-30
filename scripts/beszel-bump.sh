@@ -57,8 +57,14 @@ main() {
   fi
   require_version "${version}"
 
-  local current
+  # Both packages are renamed together, so they must be at the same version
+  local current hub_version
   current="$(ebuild_version net-analyzer/beszel-agent beszel-agent)"
+  hub_version="$(ebuild_version net-analyzer/beszel-hub beszel-hub)"
+  if [[ "${hub_version}" != "${current}" ]]; then
+    echo "beszel-agent (${current}) and beszel-hub (${hub_version}) are at different versions" >&2
+    exit 1
+  fi
   echo "current=${current} upstream=${version}" >&2
   if ! is_newer "${current}" "${version}"; then
     echo "Nothing to do: ${version} is not newer than ${current}" >&2

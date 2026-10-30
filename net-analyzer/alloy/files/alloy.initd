@@ -1,0 +1,33 @@
+#!/sbin/openrc-run
+# shellcheck shell=bash
+
+name="Grafana Alloy"
+description="Grafana Alloy telemetry collector"
+
+ALLOY_BINARY="${ALLOY_BINARY:-/usr/sbin/alloy}"
+ALLOY_CONFIG="${ALLOY_CONFIG:-/etc/alloy/config.alloy}"
+ALLOY_DATA_DIR="${ALLOY_DATA_DIR:-/var/lib/alloy}"
+ALLOY_LOG="${ALLOY_LOG:-/var/log/alloy/alloy.log}"
+ALLOY_USER="${ALLOY_USER:-alloy}"
+ALLOY_GROUP="${ALLOY_GROUP:-alloy}"
+ALLOY_ULIMIT="${ALLOY_ULIMIT:--n 8192}"
+
+supervisor="supervise-daemon"
+command="${ALLOY_BINARY}"
+command_args="run --storage.path ${ALLOY_DATA_DIR} ${ALLOY_CONFIG}"
+command_user="${ALLOY_USER}:${ALLOY_GROUP}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="${ALLOY_LOG}"
+error_log="${ALLOY_LOG}"
+rc_ulimit="${ALLOY_ULIMIT}"
+
+depend() {
+  need net
+  use logger
+  after firewall
+}
+
+start_pre() {
+  checkpath -q -d -m 0755 -o "${command_user}" "$(dirname "${ALLOY_LOG}")"
+  checkpath -q -d -m 0750 -o "${command_user}" "${ALLOY_DATA_DIR}"
+}

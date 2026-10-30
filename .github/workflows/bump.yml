@@ -10,7 +10,7 @@ on: # yamllint disable-line rule:truthy
       package:
         description: Package to bump (all runs every bump script)
         type: choice
-        options: [all, beszel, bun, rcon-cli, mc-conn-poller]
+        options: [all, alloy, beszel, bun, rcon-cli, mc-conn-poller]
         default: all
       version:
         description: Upstream version to bump to (needs a single package; default is the latest release)
@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [beszel, bun, rcon-cli, mc-conn-poller]
+        package: [alloy, beszel, bun, rcon-cli, mc-conn-poller]
     env:
       PACKAGE: ${{ matrix.package }}
       INPUT_PACKAGE: ${{ inputs.package }}
@@ -70,7 +70,7 @@ jobs:
             version="${INPUT_VERSION}"
           fi
           case "${PACKAGE}" in
-            rcon-cli | mc-conn-poller) cmd=(scripts/go-bump.sh "${PACKAGE}") ;;
+            alloy | rcon-cli | mc-conn-poller) cmd=(scripts/go-bump.sh "${PACKAGE}") ;;
             *) cmd=("scripts/${PACKAGE}-bump.sh") ;;
           esac
           echo "script=${cmd[*]}" >> "${GITHUB_OUTPUT}"

@@ -6,6 +6,15 @@ readonly OVERLAY_ROOT
 
 step() { printf '\n==> %s\n' "$*" >&2; }
 
+# make_tarball <out.tar.xz> <dir> <path-in-dir>
+# Reproducible: sorted entries, fixed owner and mtime, single-threaded xz, so a
+# rebuild of the same input has the same hash as the published distfile.
+make_tarball() {
+  local out="$1" dir="$2" path="$3"
+  tar --sort=name --owner=0 --group=0 --numeric-owner --mtime='@0' \
+    -C "${dir}" -cf - "${path}" | xz -9e -T1 >"${out}"
+}
+
 # True (exit 0) when $2 is a strictly newer version than $1.
 is_newer() {
   [[ "$1" != "$2" && "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" == "$2" ]]

@@ -62,6 +62,14 @@ published as `<name>-<version>-deps.tar.xz` on the overlay release `<name>-<vers
 and the YAML with the Healthchecks.io ping URL, which is a secret) is per-host and managed outside the package; only
 examples are installed under `/usr/share/doc`.
 
+## Checks
+
+[`scripts/check-ebuilds.sh`](scripts/check-ebuilds.sh) sources every ebuild through Portage (`portageq`, with this
+checkout registered as the overlay) and fails when an ebuild does not load, has an empty `KEYWORDS`, or lists a
+`LICENSE` name that does not exist in `::gentoo/licenses`. It needs a Gentoo host, so the `Ebuild Check` workflow runs it
+on the self-hosted runners, for pull requests from this repository only. A check of the names cannot tell whether the
+list is complete: when a bump pulls in new dependencies, compare the licenses of the compiled modules by hand.
+
 ## Version bumps
 
 `.github/workflows/bump.yml` runs daily and on demand (`workflow_dispatch` takes a package and optionally a version). It

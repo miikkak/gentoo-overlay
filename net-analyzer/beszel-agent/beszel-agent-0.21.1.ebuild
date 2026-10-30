@@ -16,8 +16,9 @@ SRC_URI="
 S="${WORKDIR}/beszel-${PV}"
 
 LICENSE="MIT"
-# vendored Go modules
-LICENSE+=" Apache-2.0 BSD BSD-2 ISC MPL-2.0"
+# Go modules compiled into the agent (go list -deps over the vendor tree):
+# Apache-2.0, BSD-3-Clause, BSD-2-Clause and MIT
+LICENSE+=" Apache-2.0 BSD BSD-2"
 SLOT="0"
 KEYWORDS="amd64 arm64"
 IUSE="+nvml +smart"

@@ -65,7 +65,11 @@ main() {
       ((++failed))
       continue
     fi
-    keywords="$(portageq metadata / ebuild "${cpv}" KEYWORDS)"
+    if ! keywords="$(portageq metadata / ebuild "${cpv}" KEYWORDS 2>&1)"; then
+      echo "FAIL ${cpv}: KEYWORDS lookup failed: ${keywords}" >&2
+      ((++failed))
+      continue
+    fi
 
     # Gentoo's own acct-user and acct-group ebuilds define no LICENSE either
     if [[ -z "${license}" && "${category}" != acct-user && "${category}" != acct-group ]]; then
@@ -98,7 +102,11 @@ main() {
     exit 1
   fi
   echo "${checked} ebuilds checked, ${failed} failed" >&2
-  ((failed == 0))
+  # An explicit exit: a failing arithmetic test as the last command would also
+  # fire the ERR trap and print a misleading "Error on line" after the summary
+  if ((failed > 0)); then
+    exit 1
+  fi
 }
 
 main "$@"

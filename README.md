@@ -2,14 +2,15 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package                                 | Description                                    |
-| --------------------------------------- | ---------------------------------------------- |
-| `net-analyzer/beszel-agent`             | [Beszel](https://beszel.dev) monitoring agent  |
-| `net-analyzer/beszel-hub`               | Beszel hub (web UI and API)                    |
-| `acct-user/beszel`, `acct-group/beszel` | Service user and group for the hub             |
-| `dev-lang/bun-bin`                      | Prebuilt [Bun](https://bun.sh) runtime         |
-| `games-util/rcon-cli`                   | Minecraft RCON command-line client             |
-| `net-analyzer/mc-conn-poller`           | Minecraft connectivity poller for Healthchecks |
+| Package                                                 | Description                                    |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent  |
+| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                    |
+| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub             |
+| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime         |
+| `games-util/rcon-cli`                                   | Minecraft RCON command-line client             |
+| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks |
+| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller          |
 
 ## Usage
 

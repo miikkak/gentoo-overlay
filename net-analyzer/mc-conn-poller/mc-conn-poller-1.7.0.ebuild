@@ -21,6 +21,11 @@ SLOT="0"
 KEYWORDS="amd64 arm64"
 RESTRICT="test"
 
+# the init script refuses to start without this user and group
+RDEPEND="
+	acct-group/mc-conn-poller
+	acct-user/mc-conn-poller
+"
 BDEPEND=">=dev-lang/go-1.26.6"
 
 src_prepare() {

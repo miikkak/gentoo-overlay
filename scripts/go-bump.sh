@@ -51,7 +51,8 @@ current_version() {
 # build_deps <name> <repo> <version> <out.tar.xz>
 build_deps() {
   local name="$1" repo="$2" version="$3" out="$4" work
-  work="$(mktemp -d)"
+  # Inside ${dist}, so the script's EXIT trap removes it even when a step fails
+  work="$(mktemp -d -p "${dist}")"
 
   step "Cloning ${repo} v${version}"
   git clone --quiet --depth 1 --branch "v${version}" "https://github.com/${repo}" "${work}/src"
@@ -70,7 +71,7 @@ main() {
     case "$1" in
       --no-upload) upload=false ;;
       --out)
-        [[ -n "${2:-}" ]] || {
+        [[ -n "${2:-}" && "${2:-}" != -* ]] || {
           echo "--out needs a directory" >&2
           exit 2
         }

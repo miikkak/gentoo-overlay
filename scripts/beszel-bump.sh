@@ -38,7 +38,7 @@ main() {
     case "$1" in
       --no-upload) upload=false ;;
       --out)
-        [[ -n "${2:-}" ]] || {
+        [[ -n "${2:-}" && "${2:-}" != -* ]] || {
           echo "--out needs a directory" >&2
           exit 2
         }

@@ -7,7 +7,8 @@
 #   - uploads it to the overlay release "<name>-<ver>" (unless --no-upload)
 #   - renames the ebuild and regenerates the thin Manifest
 #
-# Usage: go-bump.sh [--no-upload] <package> [version]
+# Usage: go-bump.sh [--no-upload --out DIR] <package> [version]
+# --out DIR keeps a copy of the generated distfile; --no-upload requires it.
 # Without a version, the latest upstream release is used. Prints "bumped=<ver>"
 # on stdout when something changed, "bumped=" otherwise.
 set -Eeuo pipefail
@@ -64,10 +65,18 @@ build_deps() {
 }
 
 main() {
-  local upload=true name="" version=""
+  local upload=true name="" version="" out=""
   while (($#)); do
     case "$1" in
       --no-upload) upload=false ;;
+      --out)
+        [[ -n "${2:-}" ]] || {
+          echo "--out needs a directory" >&2
+          exit 2
+        }
+        out="$2"
+        shift
+        ;;
       -*)
         echo "Unknown option: $1" >&2
         exit 2
@@ -79,9 +88,14 @@ main() {
     shift
   done
   [[ -n "${name}" ]] || {
-    echo "Usage: ${0##*/} [--no-upload] <package> [version]" >&2
+    echo "Usage: ${0##*/} [--no-upload --out DIR] <package> [version]" >&2
     exit 2
   }
+  # Without an upload the distfile would only exist in the temporary directory
+  if [[ "${upload}" == false && -z "${out}" ]]; then
+    echo "--no-upload needs --out DIR to keep the generated distfile" >&2
+    exit 2
+  fi
 
   local pkgdir repo
   pkgdir="$(pkg_dir "${name}")" || {
@@ -129,6 +143,8 @@ main() {
         "${deps}"
     fi
   fi
+
+  [[ -z "${out}" ]] || save_artifacts "${out}" "${deps}"
 
   step "Fetching upstream source archive"
   curl -fsSL --retry 3 -o "${dist}/${name}-${version}.tar.gz" \

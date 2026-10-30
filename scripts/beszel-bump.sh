@@ -6,7 +6,8 @@
 #   - uploads them to the overlay release "beszel-<ver>" (unless --no-upload)
 #   - renames the ebuilds and regenerates both thin Manifests
 #
-# Usage: beszel-bump.sh [--no-upload] [version]
+# Usage: beszel-bump.sh [--no-upload --out DIR] [version]
+# --out DIR keeps a copy of the generated distfiles; --no-upload requires it.
 # Without a version, the latest upstream release is used. Prints "bumped=<ver>"
 # on stdout when something changed, "bumped=" otherwise.
 set -Eeuo pipefail
@@ -32,10 +33,18 @@ current_version() {
 }
 
 main() {
-  local upload=true version=""
+  local upload=true version="" out=""
   while (($#)); do
     case "$1" in
       --no-upload) upload=false ;;
+      --out)
+        [[ -n "${2:-}" ]] || {
+          echo "--out needs a directory" >&2
+          exit 2
+        }
+        out="$2"
+        shift
+        ;;
       -*)
         echo "Unknown option: $1" >&2
         exit 2
@@ -44,6 +53,11 @@ main() {
     esac
     shift
   done
+  # Without an upload the distfiles would only exist in the temporary directory
+  if [[ "${upload}" == false && -z "${out}" ]]; then
+    echo "--no-upload needs --out DIR to keep the generated distfiles" >&2
+    exit 2
+  fi
 
   if [[ -z "${version}" ]]; then
     step "Querying latest upstream release"
@@ -86,6 +100,9 @@ main() {
         "${dist}/beszel-${version}-deps.tar.xz" "${dist}/beszel-${version}-web.tar.xz"
     fi
   fi
+
+  [[ -z "${out}" ]] || save_artifacts "${out}" \
+    "${dist}/beszel-${version}-deps.tar.xz" "${dist}/beszel-${version}-web.tar.xz"
 
   step "Fetching upstream source archive"
   curl -fsSL --retry 3 -o "${dist}/beszel-${version}.tar.gz" \

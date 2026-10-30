@@ -20,6 +20,17 @@ is_newer() {
   [[ "$1" != "$2" && "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" == "$2" ]]
 }
 
+# save_artifacts <dir> <file>...
+# Copies generated distfiles out of the bump script's temporary directory, so a
+# --no-upload run does not leave a bumped ebuild whose distfiles are gone.
+save_artifacts() {
+  local dir="$1"
+  shift
+  mkdir -p "${dir}"
+  cp -- "$@" "${dir}/"
+  echo "Saved to ${dir}: $(basename -a "$@" | tr '\n' ' ')" >&2
+}
+
 # Exit 1 unless $1 looks like a plain dotted version.
 require_version() {
   [[ "$1" =~ ^[0-9]+(\.[0-9]+)*$ ]] || {

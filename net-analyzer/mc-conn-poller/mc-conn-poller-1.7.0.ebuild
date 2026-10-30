@@ -45,6 +45,9 @@ src_install() {
 	# package, so only examples are installed.
 	newdoc etc/conf.d/mc-conn-poller conf.d.example
 	dodoc README.md etc/mc-conn-poller.yaml.example
+	# keep the examples uncompressed: pkg_postinst prints their paths
+	docompress -x "/usr/share/doc/${PF}/conf.d.example" \
+		"/usr/share/doc/${PF}/mc-conn-poller.yaml.example"
 }
 
 pkg_postinst() {

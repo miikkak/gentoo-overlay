@@ -70,10 +70,12 @@ a draft PR. For Beszel and the Go programs it also builds the distfiles and uplo
 Locally:
 
 ```bash
-scripts/beszel-bump.sh [--no-upload] [version]
+scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
-scripts/go-bump.sh [--no-upload] rcon-cli|mc-conn-poller [version]
+scripts/go-bump.sh [--no-upload --out DIR] rcon-cli|mc-conn-poller [version]
 ```
 
-An existing `<name>-<version>` release is reused rather than rebuilt, so published hashes never change. Shared helpers
-live in [`scripts/lib/overlay.sh`](scripts/lib/overlay.sh).
+`--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would
+otherwise be deleted with the temporary directory while the ebuild and Manifest already point at them. An existing
+`<name>-<version>` release is reused rather than rebuilt, so published hashes never change. Shared helpers live in
+[`scripts/lib/overlay.sh`](scripts/lib/overlay.sh).

@@ -19,8 +19,12 @@ SRC_URI="
 S="${WORKDIR}/beszel-${PV}"
 
 LICENSE="MIT"
-# vendored Go modules and bundled UI dependencies
-LICENSE+=" Apache-2.0 BSD BSD-2 ISC MPL-2.0"
+# Go modules compiled into the hub (go list -deps over the vendor tree):
+# Apache-2.0, BSD-3-Clause, BSD-2-Clause and MIT. The built web UI adds ISC
+# (lucide icons and others) and 0BSD (tslib). Dual-licensed parts are covered
+# by names already listed: paho.golang is EPL-2.0 or EDL-1.0 (BSD-3-Clause)
+# and DOMPurify, inside PocketBase's embedded editor, is Apache-2.0 or MPL-2.0.
+LICENSE+=" Apache-2.0 BSD BSD-2 ISC 0BSD"
 SLOT="0"
 KEYWORDS="amd64 arm64"
 # Upstream tests need network and a running environment

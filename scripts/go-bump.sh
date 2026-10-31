@@ -61,7 +61,7 @@ pkg_module_dir() {
 # that is not flagged as a prerelease, and only the stable v2 line is packaged.
 pkg_tag_filter() {
   case "$1" in
-    chroma) echo '^v2\.' ;;
+    chroma) echo '^v2\.[0-9]+\.[0-9]+$' ;;
     *) echo "" ;;
   esac
 }
@@ -161,6 +161,14 @@ main() {
     version="${version#v}"
   fi
   require_version "${version}"
+  # An explicit version has to pass the same filter, so a manual bump cannot
+  # move a package off its supported release line.
+  local tag_filter
+  tag_filter="$(pkg_tag_filter "${name}")"
+  if [[ -n "${tag_filter}" && ! "v${version}" =~ ${tag_filter} ]]; then
+    echo "Version ${version} does not match the release line of ${name} (${tag_filter})" >&2
+    exit 2
+  fi
 
   local current
   current="$(ebuild_version "${pkgdir}" "${name}")"

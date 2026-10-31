@@ -15,8 +15,9 @@ SRC_URI="
 "
 
 LICENSE="MIT"
-# vendored Go modules (MIT and BSD-3-Clause, checked from vendor/)
-LICENSE+=" BSD"
+# vendored Go modules (MIT and BSD-3-Clause, checked from vendor/), plus the
+# Liberation Mono font that the SVG formatter embeds (OFL-1.1, see COPYING)
+LICENSE+=" BSD OFL-1.1"
 SLOT="0"
 KEYWORDS="amd64 arm64"
 RESTRICT="test"
@@ -45,5 +46,5 @@ src_compile() {
 
 src_install() {
 	dobin chroma
-	dodoc README.md
+	dodoc README.md COPYING
 }

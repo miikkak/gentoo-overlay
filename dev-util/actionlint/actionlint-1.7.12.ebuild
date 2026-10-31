@@ -36,11 +36,11 @@ src_compile() {
 
 src_install() {
 	dobin actionlint
-	dodoc README.md
+	dodoc README.md LICENSE.txt
 	dodoc -r docs
 }
 
 pkg_postinst() {
-	optfeature "checking shell scripts in run: steps" dev-util/shellcheck
+	optfeature "checking shell scripts in run: steps" dev-util/shellcheck-bin dev-util/shellcheck
 	optfeature "checking Python scripts in run: steps" dev-python/pyflakes
 }

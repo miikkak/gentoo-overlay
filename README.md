@@ -85,7 +85,9 @@ The offline input is the `cargo vendor --locked` tree of upstream's `Cargo.lock`
 `<name>-<version>-deps.tar.xz` on the overlay release `<name>-<version>` by
 [`scripts/cargo-bump.sh`](scripts/cargo-bump.sh). It unpacks to `${P}/vendor`; the ebuild points `ECARGO_VENDOR` there,
 so `cargo.eclass` writes a cargo config that replaces crates.io with it and builds offline. The `LICENSE` of a Rust
-package is checked from the `license` fields in `vendor/*/Cargo.toml`.
+package is checked from the `license` fields in `vendor/*/Cargo.toml`. A bump does not update `RUST_MIN_VER` (the highest
+`rust-version` among the crates) or the license list: review both on each bump PR, as new crates can raise them. The bump
+job needs `cargo` on the runner.
 
 lolcrab's `build.rs` reads `OUT_DIR` with `option_env!`, so it only writes the shell completions when the variable is
 set while the build script is compiled (upstream's release workflow sets `OUT_DIR=target`). The ebuild does the same and

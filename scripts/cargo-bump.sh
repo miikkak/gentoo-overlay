@@ -43,6 +43,10 @@ pkg_repo() {
 # build_deps <name> <repo> <version> <out.tar.xz>
 build_deps() {
   local name="$1" repo="$2" version="$3" out="$4" work
+  command -v cargo >/dev/null || {
+    echo "cargo not found: the runner needs a Rust toolchain to vendor crates" >&2
+    exit 1
+  }
   # Inside ${dist}, so the script's EXIT trap removes it even when a step fails
   work="$(mktemp -d -p "${dist}")"
 

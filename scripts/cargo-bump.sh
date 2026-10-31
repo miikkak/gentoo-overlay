@@ -29,6 +29,7 @@ readonly root
 pkg_dir() {
   case "$1" in
     lolcrab) echo "app-misc/lolcrab" ;;
+    rtk) echo "app-misc/rtk" ;;
     *) return 1 ;;
   esac
 }
@@ -36,6 +37,7 @@ pkg_dir() {
 pkg_repo() {
   case "$1" in
     lolcrab) echo "mazznoer/lolcrab" ;;
+    rtk) echo "rtk-ai/rtk" ;;
     *) return 1 ;;
   esac
 }

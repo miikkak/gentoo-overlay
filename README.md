@@ -2,19 +2,20 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package                                                 | Description                                                                             |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `dev-util/actionlint`                                   | [actionlint](https://github.com/rhysd/actionlint) GitHub Actions workflow linter        |
-| `app-misc/lolcrab`                                      | [lolcrab](https://github.com/mazznoer/lolcrab) rainbow text, like lolcat but with noise |
-| `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector                    |
-| `acct-user/alloy`, `acct-group/alloy`                   | Service user and group for Alloy                                                        |
-| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent                                           |
-| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                                                             |
-| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub                                                      |
-| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime                                                  |
-| `games-util/rcon-cli`                                   | Minecraft RCON command-line client                                                      |
-| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks                                          |
-| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller                                                   |
+| Package                                                 | Description                                                                                          |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `dev-util/actionlint`                                   | [actionlint](https://github.com/rhysd/actionlint) GitHub Actions workflow linter                     |
+| `app-misc/rtk`                                          | [rtk](https://www.rtk-ai.app) CLI proxy that cuts LLM token use (`engine` USE flag: BUSL-1.1 engine) |
+| `app-misc/lolcrab`                                      | [lolcrab](https://github.com/mazznoer/lolcrab) rainbow text, like lolcat but with noise              |
+| `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector                                 |
+| `acct-user/alloy`, `acct-group/alloy`                   | Service user and group for Alloy                                                                     |
+| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent                                                        |
+| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                                                                          |
+| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub                                                                   |
+| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime                                                               |
+| `games-util/rcon-cli`                                   | Minecraft RCON command-line client                                                                   |
+| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks                                                       |
+| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller                                                                |
 
 ## Usage
 
@@ -79,7 +80,7 @@ The package installs `/usr/sbin/alloy` and an OpenRC init script, and creates th
 outside the package. `LICENSE` includes AGPL-3 because the vendored `grafana/loki/v3` packages `logql`, `querier` and
 `storage` carry it, although upstream calls Alloy itself Apache-2.0.
 
-## Rust packages (`app-misc/lolcrab`)
+## Rust packages (`app-misc/lolcrab`, `app-misc/rtk`)
 
 The offline input is the `cargo vendor --locked` tree of upstream's `Cargo.lock`, published as
 `<name>-<version>-deps.tar.xz` on the overlay release `<name>-<version>` by
@@ -92,6 +93,13 @@ job needs `cargo` on the runner.
 lolcrab's `build.rs` reads `OUT_DIR` with `option_env!`, so it only writes the shell completions when the variable is
 set while the build script is compiled (upstream's release workflow sets `OUT_DIR=target`). The ebuild does the same and
 installs the bash, zsh and fish completions.
+
+`app-misc/rtk` has two editions, selected by the `engine` USE flag (enabled by default, as upstream's default build). With
+it the binary links `rtk-engine`, which is BUSL-1.1: free for production use as part of the `rtk` binary, but not to be
+offered to third parties as a paid or hosted service (`engine/LICENSE`). BUSL-1.1 is not in `@FREE`, so a host that keeps
+`ACCEPT_LICENSE="@FREE"` needs `app-misc/rtk BUSL-1.1` in `/etc/portage/package.license`. With `-engine` only the
+Apache-2.0 hook and filter core is built, with the same binary name. Upstream's `proxy/` daemon (`rtk-proxy`) is a
+separate program and is not packaged.
 
 ## Checks
 
@@ -114,7 +122,7 @@ Locally:
 scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
 scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|chroma|rcon-cli|mc-conn-poller [version]
-scripts/cargo-bump.sh [--no-upload --out DIR] lolcrab [version]
+scripts/cargo-bump.sh [--no-upload --out DIR] lolcrab|rtk [version]
 ```
 
 `--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would

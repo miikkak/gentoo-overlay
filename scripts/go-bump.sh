@@ -25,6 +25,7 @@ readonly root
 # Packages handled by this script: name -> category/package and upstream repo.
 pkg_dir() {
   case "$1" in
+    actionlint) echo "dev-util/actionlint" ;;
     alloy) echo "net-analyzer/alloy" ;;
     rcon-cli) echo "games-util/rcon-cli" ;;
     mc-conn-poller) echo "net-analyzer/mc-conn-poller" ;;
@@ -34,6 +35,7 @@ pkg_dir() {
 
 pkg_repo() {
   case "$1" in
+    actionlint) echo "rhysd/actionlint" ;;
     alloy) echo "grafana/alloy" ;;
     rcon-cli) echo "miikkak/rcon-cli" ;;
     mc-conn-poller) echo "miikkak/mc-conn-poller" ;;

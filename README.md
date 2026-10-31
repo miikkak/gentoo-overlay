@@ -2,17 +2,18 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package                                                 | Description                                                          |
-| ------------------------------------------------------- | -------------------------------------------------------------------- |
-| `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector |
-| `acct-user/alloy`, `acct-group/alloy`                   | Service user and group for Alloy                                     |
-| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent                        |
-| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                                          |
-| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub                                   |
-| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime                               |
-| `games-util/rcon-cli`                                   | Minecraft RCON command-line client                                   |
-| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks                       |
-| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller                                |
+| Package                                                 | Description                                                                      |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `dev-util/actionlint`                                   | [actionlint](https://github.com/rhysd/actionlint) GitHub Actions workflow linter |
+| `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector             |
+| `acct-user/alloy`, `acct-group/alloy`                   | Service user and group for Alloy                                                 |
+| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent                                    |
+| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                                                      |
+| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub                                               |
+| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime                                           |
+| `games-util/rcon-cli`                                   | Minecraft RCON command-line client                                               |
+| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks                                   |
+| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller                                            |
 
 ## Usage
 
@@ -96,7 +97,7 @@ Locally:
 ```bash
 scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
-scripts/go-bump.sh [--no-upload --out DIR] alloy|rcon-cli|mc-conn-poller [version]
+scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|rcon-cli|mc-conn-poller [version]
 ```
 
 `--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would

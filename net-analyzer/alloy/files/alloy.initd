@@ -30,11 +30,14 @@ depend() {
 # manage_dir <dir> <mode>
 # checkpath changes the owner of existing directories, so only a dedicated
 # alloy directory is created and chowned here. Any other path has to exist
-# already, and is left alone.
+# already, and is left alone. The mode is only set on creation: checkpath would
+# otherwise loosen the mode an admin has tightened on an existing directory.
 manage_dir() {
   local dir="$1" mode="$2"
+  local -a args=(-q -d -o "${command_user}")
   if [[ "$(basename "${dir}")" == alloy ]]; then
-    checkpath -q -d -m "${mode}" -o "${command_user}" "${dir}"
+    [[ -d "${dir}" ]] || args+=(-m "${mode}")
+    checkpath "${args[@]}" "${dir}"
   elif [[ ! -d "${dir}" ]]; then
     eerror "${dir} does not exist; create it owned by ${command_user}"
     return 1

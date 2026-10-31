@@ -3,7 +3,7 @@
 
 EAPI=8
 
-inherit go-module
+inherit go-module user-info
 
 DESCRIPTION="Grafana Alloy telemetry collector"
 HOMEPAGE="https://grafana.com/docs/alloy/"
@@ -56,8 +56,11 @@ pkg_pretend() {
 	# supplementary groups an existing alloy user needs (for example adm, to read
 	# logs) are removed when the package is installed.
 	local groups
-	groups="$(id -nG alloy 2>/dev/null | tr ' ' '\n' | grep -v -x alloy | paste -sd ' ' || true)"
-	if [[ -n ${groups} ]]; then
+	groups="$(egetgroups alloy 2>/dev/null || true)"
+	# the first entry is the primary group; the rest are comma-separated
+	if [[ ${groups} == *,* ]]; then
+		groups="${groups#*,}"
+		groups="${groups//,/ }"
 		ewarn "The existing alloy user is in these groups beyond alloy: ${groups}"
 		ewarn "They are removed on install unless listed in make.conf:"
 		ewarn "  ACCT_USER_ALLOY_GROUPS_ADD=\"${groups}\""

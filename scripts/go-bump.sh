@@ -27,6 +27,7 @@ pkg_dir() {
   case "$1" in
     actionlint) echo "dev-util/actionlint" ;;
     alloy) echo "net-analyzer/alloy" ;;
+    chroma) echo "app-text/chroma" ;;
     rcon-cli) echo "games-util/rcon-cli" ;;
     mc-conn-poller) echo "net-analyzer/mc-conn-poller" ;;
     *) return 1 ;;
@@ -37,6 +38,7 @@ pkg_repo() {
   case "$1" in
     actionlint) echo "rhysd/actionlint" ;;
     alloy) echo "grafana/alloy" ;;
+    chroma) echo "alecthomas/chroma" ;;
     rcon-cli) echo "miikkak/rcon-cli" ;;
     mc-conn-poller) echo "miikkak/mc-conn-poller" ;;
     *) return 1 ;;
@@ -49,8 +51,32 @@ pkg_repo() {
 pkg_module_dir() {
   case "$1" in
     alloy) echo "collector" ;;
+    chroma) echo "cmd/chroma" ;;
     *) echo "." ;;
   esac
+}
+
+# Release tags that are considered, as an extended regular expression. Empty
+# means the repository's latest release. Chroma's latest release is a v3 alpha
+# that is not flagged as a prerelease, and only the stable v2 line is packaged.
+pkg_tag_filter() {
+  case "$1" in
+    chroma) echo '^v2\.' ;;
+    *) echo "" ;;
+  esac
+}
+
+# latest_tag <repo> <filter>
+# Newest non-prerelease tag matching the filter, or the latest release's tag.
+latest_tag() {
+  local repo="$1" filter="$2"
+  if [[ -z "${filter}" ]]; then
+    gh api "repos/${repo}/releases/latest" --jq .tag_name
+    return
+  fi
+  gh api "repos/${repo}/releases" --paginate \
+    --jq '.[] | select(.prerelease | not) | select(.draft | not) | .tag_name' |
+    { grep -E "${filter}" || true; } | sort -V | tail -n1
 }
 
 # prepare_source <name> <source dir>
@@ -127,7 +153,11 @@ main() {
 
   if [[ -z "${version}" ]]; then
     step "Querying latest upstream release of ${repo}"
-    version="$(gh api "repos/${repo}/releases/latest" --jq .tag_name)"
+    version="$(latest_tag "${repo}" "$(pkg_tag_filter "${name}")")"
+    [[ -n "${version}" ]] || {
+      echo "No matching release found for ${repo}" >&2
+      exit 1
+    }
     version="${version#v}"
   fi
   require_version "${version}"

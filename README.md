@@ -97,7 +97,7 @@ Locally:
 ```bash
 scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
-scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|rcon-cli|mc-conn-poller [version]
+scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|chroma|rcon-cli|mc-conn-poller [version]
 ```
 
 `--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would

@@ -51,6 +51,14 @@ src_install() {
 	dodoc README.md
 }
 
+src_unpack() {
+	# go-module_src_unpack runs `go mod verify` (which needs the network) unless
+	# ${S}/vendor exists. The vendor tree is shipped in ${S}/collector/vendor, so
+	# unpack without it.
+	default
+	go-env_set_compile_environment
+}
+
 pkg_pretend() {
 	# acct-user.eclass sets the account's groups to exactly ACCT_USER_GROUPS, so
 	# supplementary groups an existing alloy user needs (for example adm, to read

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>miikka@guesswhoami.net</email>
+		<name>Miikka Karhuluoma</name>
+	</maintainer>
+	<longdescription>
+		Like lolcat, but with noise and more colorful: prints its input in rainbow
+		colors. Installs bash, zsh and fish completions.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">mazznoer/lolcrab</remote-id>
+	</upstream>
+</pkgmetadata>

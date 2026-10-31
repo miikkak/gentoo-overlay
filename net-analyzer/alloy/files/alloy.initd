@@ -27,7 +27,21 @@ depend() {
   after firewall
 }
 
+# manage_dir <dir> <mode>
+# checkpath changes the owner of existing directories, so only a dedicated
+# alloy directory is created and chowned here. Any other path has to exist
+# already, and is left alone.
+manage_dir() {
+  local dir="$1" mode="$2"
+  if [[ "$(basename "${dir}")" == alloy ]]; then
+    checkpath -q -d -m "${mode}" -o "${command_user}" "${dir}"
+  elif [[ ! -d "${dir}" ]]; then
+    eerror "${dir} does not exist; create it owned by ${command_user}"
+    return 1
+  fi
+}
+
 start_pre() {
-  checkpath -q -d -m 0755 -o "${command_user}" "$(dirname "${ALLOY_LOG}")"
-  checkpath -q -d -m 0750 -o "${command_user}" "${ALLOY_DATA_DIR}"
+  manage_dir "$(dirname "${ALLOY_LOG}")" 0755 || return 1
+  manage_dir "${ALLOY_DATA_DIR}" 0750 || return 1
 }

@@ -50,6 +50,19 @@ src_install() {
 	dodoc README.md
 }
 
+pkg_pretend() {
+	# acct-user.eclass sets the account's groups to exactly ACCT_USER_GROUPS, so
+	# supplementary groups an existing alloy user needs (for example adm, to read
+	# logs) are removed when the package is installed.
+	local groups
+	groups="$(id -nG alloy 2>/dev/null | tr ' ' '\n' | grep -v -x alloy | paste -sd ' ' || true)"
+	if [[ -n ${groups} ]]; then
+		ewarn "The existing alloy user is in these groups beyond alloy: ${groups}"
+		ewarn "They are removed on install unless listed in make.conf:"
+		ewarn "  ACCT_USER_ALLOY_GROUPS_ADD=\"${groups}\""
+	fi
+}
+
 pkg_postinst() {
 	elog "The config (${EROOT}/etc/alloy/config.alloy) and ${EROOT}/etc/conf.d/alloy"
 	elog "are per-host and not installed by the package."

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>miikka@guesswhoami.net</email>
+		<name>Miikka Karhuluoma</name>
+	</maintainer>
+	<longdescription>
+		Rust Token Killer: a command-line proxy that filters and compresses command
+		output before it reaches an LLM agent's context. The engine USE flag builds
+		the full edition with the BUSL-1.1 compression engine; without it only the
+		Apache-2.0 hook and filter core is built.
+	</longdescription>
+	<use>
+		<flag name="engine">Build the full edition, linking the BUSL-1.1 rtk-engine
+			compression engine (upstream's default); without it, the Apache-2.0
+			"OSS" edition with the hook rewrite system and command filters</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">rtk-ai/rtk</remote-id>
+	</upstream>
+</pkgmetadata>

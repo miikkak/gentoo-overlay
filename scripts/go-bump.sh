@@ -25,6 +25,7 @@ readonly root
 # Packages handled by this script: name -> category/package and upstream repo.
 pkg_dir() {
   case "$1" in
+    alloy) echo "net-analyzer/alloy" ;;
     rcon-cli) echo "games-util/rcon-cli" ;;
     mc-conn-poller) echo "net-analyzer/mc-conn-poller" ;;
     *) return 1 ;;
@@ -33,15 +34,40 @@ pkg_dir() {
 
 pkg_repo() {
   case "$1" in
+    alloy) echo "grafana/alloy" ;;
     rcon-cli) echo "miikkak/rcon-cli" ;;
     mc-conn-poller) echo "miikkak/mc-conn-poller" ;;
     *) return 1 ;;
   esac
 }
 
+# Directory of the Go module that is built, relative to the repository root.
+# The vendor tree has to sit next to its go.mod, so the ebuild finds it at
+# ${S}/<dir>/vendor.
+pkg_module_dir() {
+  case "$1" in
+    alloy) echo "collector" ;;
+    *) echo "." ;;
+  esac
+}
+
+# prepare_source <name> <source dir>
+# `go mod vendor` ignores build tags, so it also resolves go:embed patterns of
+# files that are never compiled. Alloy's embedalloyui file embeds the built web
+# UI, which is deliberately not part of the package: stub the directory.
+prepare_source() {
+  case "$1" in
+    alloy)
+      mkdir -p "$2/internal/web/ui/dist"
+      echo "stub for go mod vendor; the web UI is not built" >"$2/internal/web/ui/dist/placeholder"
+      ;;
+  esac
+}
+
 # build_deps <name> <repo> <version> <out.tar.xz>
 build_deps() {
-  local name="$1" repo="$2" version="$3" out="$4" work
+  local name="$1" repo="$2" version="$3" out="$4" work moddir
+  moddir="$(pkg_module_dir "${name}")"
   # Inside ${dist}, so the script's EXIT trap removes it even when a step fails
   work="$(mktemp -d -p "${dist}")"
 
@@ -49,9 +75,10 @@ build_deps() {
   git clone --quiet --depth 1 --branch "v${version}" "https://github.com/${repo}" "${work}/src"
 
   step "Vendoring Go modules (go mod vendor)"
-  (cd "${work}/src" && go mod vendor)
-  mkdir -p "${work}/stage/${name}-${version}"
-  mv "${work}/src/vendor" "${work}/stage/${name}-${version}/vendor"
+  prepare_source "${name}" "${work}/src"
+  (cd "${work}/src/${moddir}" && go mod vendor)
+  mkdir -p "${work}/stage/${name}-${version}/${moddir}"
+  mv "${work}/src/${moddir}/vendor" "${work}/stage/${name}-${version}/${moddir}/vendor"
   make_tarball "${out}" "${work}/stage" "${name}-${version}"
   rm -rf "${work}"
 }

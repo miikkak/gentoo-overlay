@@ -1,0 +1,50 @@
+#!/sbin/openrc-run
+# shellcheck shell=bash
+
+name="Grafana Alloy"
+description="Grafana Alloy telemetry collector"
+
+ALLOY_BINARY="${ALLOY_BINARY:-/usr/sbin/alloy}"
+ALLOY_CONFIG="${ALLOY_CONFIG:-/etc/alloy/config.alloy}"
+ALLOY_DATA_DIR="${ALLOY_DATA_DIR:-/var/lib/alloy}"
+ALLOY_LOG="${ALLOY_LOG:-/var/log/alloy/alloy.log}"
+ALLOY_USER="${ALLOY_USER:-alloy}"
+ALLOY_GROUP="${ALLOY_GROUP:-alloy}"
+ALLOY_ULIMIT="${ALLOY_ULIMIT:--n 8192}"
+
+supervisor="supervise-daemon"
+command="${ALLOY_BINARY}"
+command_args="run --storage.path ${ALLOY_DATA_DIR} ${ALLOY_CONFIG}"
+command_user="${ALLOY_USER}:${ALLOY_GROUP}"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="${ALLOY_LOG}"
+error_log="${ALLOY_LOG}"
+rc_ulimit="${ALLOY_ULIMIT}"
+
+depend() {
+  need net
+  use logger
+  after firewall
+}
+
+# manage_dir <dir> <mode>
+# checkpath changes the owner of existing directories, so only a dedicated
+# alloy directory is created and chowned here. Any other path has to exist
+# already, and is left alone. The mode is only set on creation: checkpath would
+# otherwise loosen the mode an admin has tightened on an existing directory.
+manage_dir() {
+  local dir="$1" mode="$2"
+  local -a args=(-q -d -o "${command_user}")
+  if [[ "$(basename "${dir}")" == alloy ]]; then
+    [[ -d "${dir}" ]] || args+=(-m "${mode}")
+    checkpath "${args[@]}" "${dir}"
+  elif [[ ! -d "${dir}" ]]; then
+    eerror "${dir} does not exist; create it owned by ${command_user}"
+    return 1
+  fi
+}
+
+start_pre() {
+  manage_dir "$(dirname "${ALLOY_LOG}")" 0755 || return 1
+  manage_dir "${ALLOY_DATA_DIR}" 0750 || return 1
+}

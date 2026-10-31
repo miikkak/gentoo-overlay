@@ -2,15 +2,17 @@
 
 Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 
-| Package                                                 | Description                                    |
-| ------------------------------------------------------- | ---------------------------------------------- |
-| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent  |
-| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                    |
-| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub             |
-| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime         |
-| `games-util/rcon-cli`                                   | Minecraft RCON command-line client             |
-| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks |
-| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller          |
+| Package                                                 | Description                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------- |
+| `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector |
+| `acct-user/alloy`, `acct-group/alloy`                   | Service user and group for Alloy                                     |
+| `net-analyzer/beszel-agent`                             | [Beszel](https://beszel.dev) monitoring agent                        |
+| `net-analyzer/beszel-hub`                               | Beszel hub (web UI and API)                                          |
+| `acct-user/beszel`, `acct-group/beszel`                 | Service user and group for the hub                                   |
+| `dev-lang/bun-bin`                                      | Prebuilt [Bun](https://bun.sh) runtime                               |
+| `games-util/rcon-cli`                                   | Minecraft RCON command-line client                                   |
+| `net-analyzer/mc-conn-poller`                           | Minecraft connectivity poller for Healthchecks                       |
+| `acct-user/mc-conn-poller`, `acct-group/mc-conn-poller` | Service user and group for the poller                                |
 
 ## Usage
 
@@ -62,6 +64,19 @@ published as `<name>-<version>-deps.tar.xz` on the overlay release `<name>-<vers
 and the YAML with the Healthchecks.io ping URL, which is a secret) is per-host and managed outside the package; only
 examples are installed under `/usr/share/doc`.
 
+## `net-analyzer/alloy`
+
+Alloy is built from the `collector/` module, upstream's entry point for release builds, so
+[`scripts/go-bump.sh`](scripts/go-bump.sh) vendors that module and the distfile unpacks to `collector/vendor`. Two things
+upstream embeds are deliberately left out: the web UI (the `embedalloyui` tag, which would need a Node build) and the
+Beyla eBPF binary (a downloaded artifact). Metric scraping and remote write do not use either. `go mod vendor` ignores
+build tags and would fail on the missing UI `dist` directory, so the bump script stubs it for the vendoring step only.
+
+The package installs `/usr/sbin/alloy` and an OpenRC init script, and creates the `alloy` user and group. The config
+(`/etc/alloy/config.alloy`, which holds the Grafana Cloud credentials) and `/etc/conf.d/alloy` are per-host and stay
+outside the package. `LICENSE` includes AGPL-3 because the vendored `grafana/loki/v3` packages `logql`, `querier` and
+`storage` carry it, although upstream calls Alloy itself Apache-2.0.
+
 ## Checks
 
 [`scripts/check-ebuilds.sh`](scripts/check-ebuilds.sh) sources every ebuild through Portage (`portageq`, with this
@@ -81,7 +96,7 @@ Locally:
 ```bash
 scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
-scripts/go-bump.sh [--no-upload --out DIR] rcon-cli|mc-conn-poller [version]
+scripts/go-bump.sh [--no-upload --out DIR] alloy|rcon-cli|mc-conn-poller [version]
 ```
 
 `--out DIR` keeps a copy of the generated distfiles, and `--no-upload` requires it: without an upload they would

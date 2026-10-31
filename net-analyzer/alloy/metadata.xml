@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>miikka@guesswhoami.net</email>
+		<name>Miikka Karhuluoma</name>
+	</maintainer>
+	<longdescription>
+		Grafana Alloy, an OpenTelemetry Collector distribution with Prometheus
+		pipelines. Built without the embedded web UI and without the embedded Beyla
+		eBPF binary: it scrapes metrics and ships them to a remote-write endpoint.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">grafana/alloy</remote-id>
+	</upstream>
+</pkgmetadata>

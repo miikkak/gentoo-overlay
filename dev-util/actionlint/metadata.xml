@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>miikka@guesswhoami.net</email>
+		<name>Miikka Karhuluoma</name>
+	</maintainer>
+	<longdescription>
+		Static checker for GitHub Actions workflow files. Checks syntax, expressions,
+		action inputs and, when the tools are installed, shell scripts with
+		shellcheck and Python scripts with pyflakes.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">rhysd/actionlint</remote-id>
+	</upstream>
+</pkgmetadata>

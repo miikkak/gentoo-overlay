@@ -31,9 +31,10 @@ BDEPEND=">=dev-lang/go-1.27.3"
 
 src_compile() {
 	local pkg=github.com/grafana/alloy/internal/build
-	# Neither the web UI (embedalloyui) nor the Beyla eBPF binary is embedded:
-	# the UI is a debugging aid and Beyla is not used. The binary is the
-	# collector/ module, upstream's own entry point for release builds.
+	# gore2regex is upstream's default: it swaps loki.secretfilter onto go-re2.
+	# Not embedded: the web UI (embedalloyui, needs a Node build) and the Beyla
+	# eBPF binary, neither of which this host uses. The binary is the collector/
+	# module, upstream's own entry point for release builds.
 	cd collector || die
 	ego build -mod=vendor -trimpath -buildmode=pie \
 		-tags gore2regex \

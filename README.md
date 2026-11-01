@@ -5,6 +5,7 @@ Personal Gentoo overlay (`miikkak`), OpenRC-oriented.
 | Package                                                 | Description                                                                                          |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `dev-util/actionlint`                                   | [actionlint](https://github.com/rhysd/actionlint) GitHub Actions workflow linter                     |
+| `dev-util/falco`                                        | [falco](https://github.com/ysugimoto/falco) Fastly VCL linter, formatter, tester and local simulator |
 | `app-misc/rtk`                                          | [rtk](https://www.rtk-ai.app) CLI proxy that cuts LLM token use (`engine` USE flag: BUSL-1.1 engine) |
 | `app-misc/lolcrab`                                      | [lolcrab](https://github.com/mazznoer/lolcrab) rainbow text, like lolcat but with noise              |
 | `net-analyzer/alloy`                                    | [Grafana Alloy](https://grafana.com/docs/alloy/) telemetry collector                                 |
@@ -121,7 +122,7 @@ Locally:
 ```bash
 scripts/beszel-bump.sh [--no-upload --out DIR] [version]
 scripts/bun-bump.sh [version]
-scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|chroma|rcon-cli|mc-conn-poller [version]
+scripts/go-bump.sh [--no-upload --out DIR] actionlint|alloy|chroma|falco|rcon-cli|mc-conn-poller [version]
 scripts/cargo-bump.sh [--no-upload --out DIR] lolcrab|rtk [version]
 ```
 

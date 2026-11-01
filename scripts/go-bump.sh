@@ -28,6 +28,7 @@ pkg_dir() {
     actionlint) echo "dev-util/actionlint" ;;
     alloy) echo "net-analyzer/alloy" ;;
     chroma) echo "app-text/chroma" ;;
+    falco) echo "dev-util/falco" ;;
     rcon-cli) echo "games-util/rcon-cli" ;;
     mc-conn-poller) echo "net-analyzer/mc-conn-poller" ;;
     *) return 1 ;;
@@ -39,6 +40,7 @@ pkg_repo() {
     actionlint) echo "rhysd/actionlint" ;;
     alloy) echo "grafana/alloy" ;;
     chroma) echo "alecthomas/chroma" ;;
+    falco) echo "ysugimoto/falco" ;;
     rcon-cli) echo "miikkak/rcon-cli" ;;
     mc-conn-poller) echo "miikkak/mc-conn-poller" ;;
     *) return 1 ;;

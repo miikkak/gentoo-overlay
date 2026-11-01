@@ -34,6 +34,6 @@ src_compile() {
 
 src_install() {
 	dobin falco
-	dodoc README.md
+	dodoc README.md LICENSE
 	dodoc -r docs
 }
